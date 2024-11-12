@@ -72,6 +72,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
         await context.bot.send_message(chat_id=query.from_user.id, text="Харош")
+        await asyncio.sleep(1)
         await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
 
         # Кнопка для регистрации
@@ -115,12 +116,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Просмотр зарегистрированных участников
     elif query.data == 'view_participants':
-        await query.message.delete()
+        message_id = query.message.message_id
         if participants:
             participant_list = "\n".join(participants.keys())
             await query.message.reply_text(f"Список зарегистрированных участников:\n{participant_list}")
         else:
             await query.message.reply_text("Список участников пока пуст.")
+
+        await query.message.delete()
 
         # Постоянная кнопка для повторного просмотра участников
         keyboard = [
