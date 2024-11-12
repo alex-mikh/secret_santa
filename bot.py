@@ -100,7 +100,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Вы зарегистрированы! Ждите, пока все пройдут жеребьевку.")
 
         # Отправляем вам уведомление о регистрации
-        await context.bot.send_message(chat_id='@alexander_mikh', text=f"Пользователь {username} успешно зарегистрировался.")
+        await context.bot.send_message(chat_id=561541752, text=f"Пользователь {username} успешно зарегистрировался.")
 
         # Если все 8 участников зарегистрировались, начинаем жеребьевку
         if len(participants) == 8:
@@ -143,7 +143,7 @@ async def start_secret_santa(context):
             pair_message += f"{giver} -> {receiver}\n"
 
     # Отправляем результат администратору
-    await context.bot.send_message(chat_id='@alexander_mikh', text=pair_message)
+    await context.bot.send_message(chat_id=561541752, text=pair_message)
 
 # Основная функция для запуска бота
 def main():
