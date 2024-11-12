@@ -54,31 +54,42 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Определение сообщения в зависимости от пола пользователя
             if username in female_users:
                 await context.bot.send_message(chat_id=query.from_user.id, text ="Сосала?")
-                await asyncio.sleep(1)
-                await context.bot.send_message(chat_id=query.from_user.id, text = "Сосала")
-                await asyncio.sleep(1)
-                await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
+                # await asyncio.sleep(1)
+                # await context.bot.send_message(chat_id=query.from_user.id, text = "Сосала")
+                # await asyncio.sleep(1)
+                # await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
             elif username in male_users:
                 await context.bot.send_message(chat_id=query.from_user.id, text ="Сосал?")
-                await asyncio.sleep(1)
-                await context.bot.send_message(chat_id=query.from_user.id, text ="Сосал")
-                await asyncio.sleep(1)
-                await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
+                # await asyncio.sleep(1)
+                # await context.bot.send_message(chat_id=query.from_user.id, text ="Сосал")
+                # await asyncio.sleep(1)
+                # await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
             else:
                 message = "Ты сосал?"  # Если неизвестный пользователь, пусть будет стандартное сообщение
 
             # Отправляем сообщение и ждем 5 секунд
             # await query.edit_message_text(message)
-
-            # Задержка в 3 секунд
-            await asyncio.sleep(3)
-
-            # После 5 секунд показываем основное меню
             keyboard = [
-                [InlineKeyboardButton("Зарегистрироваться", callback_data='register')],
+                [InlineKeyboardButton("Да", callback_data='yes')],
+                [InlineKeyboardButton("Да", callback_data='yes')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.message.reply_text("Теперь вы можете зарегистрироваться:", reply_markup=reply_markup)
+            await query.message.reply_text("Выберите:", reply_markup=reply_markup)
+
+
+            # Задержка в 3 секунд
+            await asyncio.sleep(1)
+    elif query.data == 'yes':
+        # Отправляем сообщение "Харош" и стикер
+        await context.bot.send_message(chat_id=query.from_user.id, text="Харош")
+        await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')        
+
+            # После 5 секунд показываем основное меню
+        keyboard = [
+            [InlineKeyboardButton("Зарегистрироваться", callback_data='register')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text("Теперь вы можете зарегистрироваться:", reply_markup=reply_markup)
 
     # Регистрация пользователя
     elif query.data == 'register':
