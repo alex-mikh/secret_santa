@@ -1,7 +1,6 @@
 import logging
 import random
 import asyncio
-import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
@@ -30,32 +29,21 @@ male_users = {'@alexander_mikh', '@Ivankotans', '@adamovichaa', '@Xitrets_23'}
 # Словарь для хранения данных участников
 participants = {}
 users_started = set()  # Хранит пользователей, которые нажали "Начать" первый раз
-registration_file = "registered_users.txt"  # Имя файла для хранения зарегистрированных участников
 
 # Команда для начала взаимодействия с ботом и отображения кнопок
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    username = f"@{update.message.from_user.username}" if update.message.from_user.username else None
-
-    # Проверяем, нажимал ли пользователь кнопку ранее
-    if username not in users_started:
-        # Добавляем пользователя в список тех, кто нажал "Начать"
-        users_started.add(username)
-
-        # Создаем меню с кнопкой "Начать"
-        keyboard = [
-            [InlineKeyboardButton("Начать", callback_data='begin')],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        await update.message.reply_text("Добро пожаловать! Чтобы начать, нажмите кнопку:", reply_markup=reply_markup)
-    else:
-        # Сообщение, если пользователь уже нажимал "Начать"
-        await update.message.reply_text("Вы уже начали! Зарегистрируйтесь, если еще не сделали этого.")
+    # Стартовое меню с кнопкой "Нажми сюда!" только для первого использования
+    keyboard = [
+        [InlineKeyboardButton("Начать", callback_data='begin')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Добро пожаловать! Чтобы начать, нажмите кнопку:", reply_markup=reply_markup)
 
 # Обработчик для нажатий на кнопки
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+
     username = f"@{query.from_user.username}" if query.from_user.username else None
 
     # Обработка кнопки "Начать"
@@ -63,10 +51,29 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if username not in users_started:
             users_started.add(username)  # Помечаем пользователя, что он начал
             
-            # Удаляем приветственное сообщение и кнопку
-            await query.message.delete()
+            # Определение сообщения в зависимости от пола пользователя
+            if username in female_users:
+                await context.bot.send_message(chat_id=query.from_user.id, text ="Сосала?")
+                await asyncio.sleep(1)
+                await context.bot.send_message(chat_id=query.from_user.id, text = "Сосала")
+                await asyncio.sleep(1)
+                await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
+            elif username in male_users:
+                await context.bot.send_message(chat_id=query.from_user.id, text ="Сосал?")
+                await asyncio.sleep(1)
+                await context.bot.send_message(chat_id=query.from_user.id, text ="Сосал")
+                await asyncio.sleep(1)
+                await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
+            else:
+                message = "Ты сосал?"  # Если неизвестный пользователь, пусть будет стандартное сообщение
 
-            # Показ основного меню для регистрации
+            # Отправляем сообщение и ждем 5 секунд
+            # await query.edit_message_text(message)
+
+            # Задержка в 3 секунд
+            await asyncio.sleep(3)
+
+            # После 5 секунд показываем основное меню
             keyboard = [
                 [InlineKeyboardButton("Зарегистрироваться", callback_data='register')],
             ]
@@ -89,26 +96,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'exclusion': exclusion
         }
 
-        # Обновляем или создаем .txt файл с зарегистрированными участниками
-        await update_registration_file(username)
-
         # Отправляем сообщение, что пользователь зарегистрирован
         await query.edit_message_text("Вы зарегистрированы! Ждите, пока все пройдут жеребьевку.")
 
+        # Отправляем вам личное сообщение о регистрации
+        admin_username = '@alexander_mikh'
+        await context.bot.send_message(chat_id=admin_username, text=f"Пользователь {username} зарегистрировался.")
+
         # Если все 8 участников зарегистрировались, начинаем жеребьевку
         if len(participants) == 8:
-            await start_secret_santa(context)
-
-# Функция для обновления файла зарегистрированных участников
-async def update_registration_file(username):
-    # Проверяем, существует ли файл. Если нет, создаем его
-    if not os.path.exists(registration_file):
-        with open(registration_file, "w") as file:
-            file.write("Список зарегистрированных участников:\n")
-
-    # Добавляем нового участника в файл
-    with open(registration_file, "a") as file:
-        file.write(f"{username}\n")
+            await start_secret_santa()
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
