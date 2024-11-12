@@ -72,9 +72,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
         await context.bot.send_message(chat_id=query.from_user.id, text="Харош")
-        await asyncio.sleep(1)
+        await asyncio.sleep(0,3)
         await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
-
+        await asyncio.sleep(2)
         # Кнопка для регистрации
         keyboard = [
             [InlineKeyboardButton("Зарегистрироваться", callback_data='register')]
@@ -129,7 +129,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        # await query.message.reply_text("Вы можете снова просмотреть список участников, нажав на кнопку:", reply_markup=reply_markup)
+        await query.message.reply_text(reply_markup=reply_markup)
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
