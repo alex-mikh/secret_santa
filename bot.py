@@ -128,7 +128,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
-        # reply_markup = InlineKeyboardMarkup(keyboard)
+        reply_markup = InlineKeyboardMarkup(keyboard)
         # await query.message.reply_text("Вы можете снова просмотреть список участников, нажав на кнопку:", reply_markup=reply_markup)
 
 # Функция для жеребьевки
