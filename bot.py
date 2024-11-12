@@ -54,39 +54,28 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Определение сообщения в зависимости от пола пользователя
             if username in female_users:
                 await context.bot.send_message(chat_id=query.from_user.id, text ="Сосала?")
-                # await asyncio.sleep(1)
-                # await context.bot.send_message(chat_id=query.from_user.id, text = "Сосала")
-                # await asyncio.sleep(1)
-                # await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
             elif username in male_users:
                 await context.bot.send_message(chat_id=query.from_user.id, text ="Сосал?")
-                # await asyncio.sleep(1)
-                # await context.bot.send_message(chat_id=query.from_user.id, text ="Сосал")
-                # await asyncio.sleep(1)
-                # await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
             else:
-                message = "Ты сосал?"  # Если неизвестный пользователь, пусть будет стандартное сообщение
+                await context.bot.send_message(chat_id=query.from_user.id, text="Ты сосал?")
 
-            # Отправляем сообщение и ждем 5 секунд
-            # await query.edit_message_text(message)
             keyboard = [
                 [InlineKeyboardButton("Да", callback_data='yes')],
                 [InlineKeyboardButton("Да", callback_data='yes')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await query.message.reply_text("Выберите:", reply_markup=reply_markup)
-
-
-            # Задержка в 3 секунд
             await asyncio.sleep(1)
+
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
         await context.bot.send_message(chat_id=query.from_user.id, text="Харош")
-        await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')        
+        await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
 
-            # После 5 секунд показываем основное меню
+        # Кнопки для регистрации и просмотра участников
         keyboard = [
             [InlineKeyboardButton("Зарегистрироваться", callback_data='register')],
+            [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.message.reply_text("Теперь вы можете зарегистрироваться:", reply_markup=reply_markup)
@@ -100,6 +89,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("Для участия необходимо иметь имя пользователя в Telegram!")
             return
 
+        # Регистрация участника
         exclusion = exclusions_dict.get(username, None)
         participants[username] = {
             'to_give': [],
@@ -113,9 +103,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Отправляем вам уведомление о регистрации
         await context.bot.send_message(chat_id=561541752, text=f"Пользователь {username} успешно зарегистрировался.")
 
+        # Обновляем меню после регистрации
+        keyboard = [
+            [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(chat_id=query.from_user.id, text="Теперь вы можете просмотреть зарегистрированных участников:", reply_markup=reply_markup)
+
         # Если все 8 участников зарегистрировались, начинаем жеребьевку
         if len(participants) == 8:
             await start_secret_santa(context)
+
+    # Просмотр зарегистрированных участников
+    elif query.data == 'view_participants':
+        if participants:
+            participant_list = "\n".join(participants.keys())
+            await query.edit_message_text(f"Список зарегистрированных участников:\n{participant_list}")
+        else:
+            await query.edit_message_text("Список участников пока пуст.")
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
@@ -132,12 +137,12 @@ async def start_secret_santa(context):
     # Создаем пары
     for i in range(len(usernames)):
         giver = usernames[i]
-        receiver = usernames[(i + 1) % len(usernames)]  # Следующий элемент в списке, последний дарит первому
+        receiver = usernames[(i + 1) % len(usernames)]
         exclusion = participants[giver]['exclusion']
 
         # Если исключение, меняем пары
         if receiver == exclusion:
-            receiver = usernames[(i + 2) % len(usernames)]  # Сдвигаем пару на два
+            receiver = usernames[(i + 2) % len(usernames)]
 
         participants[giver]['to_give'].append(receiver)
 
@@ -146,8 +151,6 @@ async def start_secret_santa(context):
         await user.send_message(f"Вы должны подарить подарок: {receiver}")
 
     # Уведомляем всех, что жеребьевка завершена
-    for user in participants:
-        await user.send_message(f"Жеребьевка завершена! Вам нужно подарить подарки следующим людям: {participants[user]['to_give']}")
     pair_message = "Пары для проверки:\n"
     for giver, details in participants.items():
         for receiver in details['to_give']:
@@ -158,14 +161,12 @@ async def start_secret_santa(context):
 
 # Основная функция для запуска бота
 def main():
-    # Ваш API token
     API_TOKEN = "7942493404:AAH3lOMj9JqrLVaBULyzuuJAV2Ok4jerA2I"
-
     application = Application.builder().token(API_TOKEN).build()
 
     # Добавляем обработчики
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button_handler))  # Обработчик нажатий кнопок
+    application.add_handler(CallbackQueryHandler(button_handler))
     application.run_polling()
 
 if __name__ == "__main__":
