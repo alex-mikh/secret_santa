@@ -100,7 +100,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
 
         # Сообщение о регистрации
-        await query.edit_message_text("Вы зарегистрированы! Ждите, пока все пройдут жеребьевку.")
+        await query.edit_message_text("Вы зарегистрированы!")
         # await context.bot.send_message(chat_id=561541752, text=f"Пользователь {username} успешно зарегистрировался.")
 
         # Кнопка для просмотра участников, доступная после регистрации
@@ -116,14 +116,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Просмотр зарегистрированных участников
     elif query.data == 'view_participants':
-        message_id = query.message.message_id
+        
         if participants:
             participant_list = "\n".join(participants.keys())
             await query.message.reply_text(f"Список зарегистрированных участников:\n{participant_list}")
         else:
             await query.message.reply_text("Список участников пока пуст.")
 
-        await query.message.delete()
 
         # Постоянная кнопка для повторного просмотра участников
         keyboard = [
