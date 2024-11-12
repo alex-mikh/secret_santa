@@ -100,14 +100,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Сообщение о регистрации
         await query.edit_message_text("Вы зарегистрированы! Ждите, пока все пройдут жеребьевку.")
-        await context.bot.send_message(chat_id=561541752, text=f"Пользователь {username} успешно зарегистрировался.")
+        # await context.bot.send_message(chat_id=561541752, text=f"Пользователь {username} успешно зарегистрировался.")
 
         # Кнопка для просмотра участников, доступная после регистрации
         keyboard = [
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(chat_id=query.from_user.id, text="Теперь вы можете просмотреть зарегистрированных участников:", reply_markup=reply_markup)
+        # reply_markup = InlineKeyboardMarkup(keyboard)
+        # await context.bot.send_message(chat_id=query.from_user.id, text="Теперь вы можете просмотреть зарегистрированных участников:", reply_markup=reply_markup)
 
         # Проверка на количество участников для старта жеребьевки
         if len(participants) == 8:
@@ -115,6 +115,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Просмотр зарегистрированных участников
     elif query.data == 'view_participants':
+        await query.message.delete()
         if participants:
             participant_list = "\n".join(participants.keys())
             await query.message.reply_text(f"Список зарегистрированных участников:\n{participant_list}")
@@ -125,8 +126,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("Вы можете снова просмотреть список участников, нажав на кнопку:", reply_markup=reply_markup)
+        # reply_markup = InlineKeyboardMarkup(keyboard)
+        # await query.message.reply_text("Вы можете снова просмотреть список участников, нажав на кнопку:", reply_markup=reply_markup)
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
