@@ -22,13 +22,8 @@ exclusions_dict = {
     '@fedorchenko_alla_a': '@Xitrets_23'
 }
 
-# Списки девушек и парней
-female_users = {'@daryakostritsa', '@kireevapechet', '@acidcoma', '@fedorchenko_alla_a'}
-male_users = {'@alexander_mikh', '@Ivankotans', '@adamovichaa', '@Xitrets_23'}
-
 # Словарь для хранения данных участников
 participants = {}
-users_started = set()  # Хранит пользователей, которые нажали "Начать" первый раз
 registered_users = {}  # Хранит зарегистрированных пользователей и их ID для отправки сообщений
 
 # Команда для начала взаимодействия с ботом и отображения кнопок
@@ -50,41 +45,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Обработка кнопки "Начать"
     if query.data == 'begin':
-        if username not in users_started:
-            users_started.add(username)  # Помечаем пользователя, что он начал
+        # Пауза перед кнопками "Да"
+        await asyncio.sleep(1)
 
-            # Определение сообщения в зависимости от пола пользователя
-            if username in female_users:
-                text = "Сосала?"
-            elif username in male_users:
-                text = "Сосал?"
-            else:
-                text = "Ты сосал?"
-            
-            # Отправляем сообщение перед кнопками
-            await context.bot.send_message(chat_id=user_id, text=text)
-
-            # Пауза перед отправкой кнопок "Да"
-            await asyncio.sleep(1)
-
-            # Отправляем кнопки "Да" после сообщения "Сосал?"
-            keyboard = [
-                [
-                    InlineKeyboardButton("Да", callback_data='yes'),
-                    InlineKeyboardButton("Да", callback_data='yes')
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await context.bot.send_message(chat_id=user_id, text="Выберите вариант:", reply_markup=reply_markup)
+        # Отправляем кнопки "Да"
+        keyboard = [
+            [InlineKeyboardButton("Да", callback_data='yes')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(chat_id=user_id, text="Сосал?", reply_markup=reply_markup)
 
     elif query.data == 'yes':
-        # Отправляем сообщение "Харош" и стикер
-        await context.bot.send_message(chat_id=user_id, text="Харош")
-        await asyncio.sleep(0.3)
-        await context.bot.send_sticker(chat_id=user_id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
+        # Отправляем сообщение "Харош" и кнопку для регистрации
+        await context.bot.send_message(chat_id=user_id, text="Харош!")
         await asyncio.sleep(2)
-
-        # Кнопка для регистрации
         keyboard = [
             [InlineKeyboardButton("Зарегистрироваться", callback_data='register')]
         ]
@@ -102,11 +76,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Регистрация участника
         exclusion = exclusions_dict.get(username, None)
-        participants[username] = {
-            'to_give': [],
-            'to_receive': 0,
-            'exclusion': exclusion
-        }
+        participants[username] = {'to_give': [], 'to_receive': 0, 'exclusion': exclusion}
         registered_users[username] = user_id  # Сохраняем ID пользователя
 
         # Сообщение о регистрации
@@ -116,7 +86,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if len(participants) == 8:
             await start_secret_santa(context)
 
-        # Отправляем или обновляем сообщение со списком участников для всех зарегистрированных
+        # Отправляем обновленный список участников для всех
         await update_participant_list(context)
 
 async def update_participant_list(context):
@@ -141,28 +111,37 @@ async def start_secret_santa(context):
     usernames = list(participants.keys())
     random.shuffle(usernames)
 
-    # Создаем пары
-    for i in range(len(usernames)):
-        giver = usernames[i]
-        receiver = usernames[(i + 1) % len(usernames)]
+    # Создаем пары, чтобы каждый дарил двум уникальным участникам и получал от двух
+    for giver in usernames:
+        assigned_recipients = 0
         exclusion = participants[giver]['exclusion']
 
-        # Если исключение, меняем пары
-        if receiver == exclusion:
-            receiver = usernames[(i + 2) % len(usernames)]
+        # Получаем список возможных получателей для текущего участника
+        potential_recipients = [u for u in usernames if u != giver and u != exclusion and u not in participants[giver]['to_give']]
+        
+        # Назначаем двух получателей
+        while assigned_recipients < 2 and potential_recipients:
+            receiver = potential_recipients.pop(0)
 
-        participants[giver]['to_give'].append(receiver)
+            if participants[receiver]['to_receive'] < 2:  # Проверяем, что получатель не получил 2 подарка
+                participants[giver]['to_give'].append(receiver)
+                participants[receiver]['to_receive'] += 1
+                assigned_recipients += 1
 
-        # Отправляем каждому пользователю его пару
-        await context.bot.send_message(chat_id=registered_users[giver], text=f"Вы должны подарок этим людям: {receiver}")
+        if assigned_recipients < 2:
+            logger.error(f"Ошибка жеребьевки для {giver}: недостаточно уникальных получателей")
 
-    # Уведомляем всех, что жеребьевка завершена
+    # Отправляем результаты жеребьевки каждому участнику
+    for giver, details in participants.items():
+        receivers_text = ", ".join(details['to_give'])
+        await context.bot.send_message(chat_id=registered_users[giver], text=f"Вы должны подарить подарок этим людям: {receivers_text}")
+
+    # Отправляем результат администратору
     pair_message = "Пары для проверки:\n"
     for giver, details in participants.items():
         for receiver in details['to_give']:
             pair_message += f"{giver} -> {receiver}\n"
 
-    # Отправляем результат администратору
     await context.bot.send_message(chat_id=561541752, text=pair_message)
 
 # Ответ на сообщения после регистрации
