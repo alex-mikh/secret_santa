@@ -1,7 +1,7 @@
 import logging
 import random
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Настройка логирования
@@ -29,6 +29,7 @@ male_users = {'@alexander_mikh', '@Ivankotans', '@adamovichaa', '@Xitrets_23'}
 # Словарь для хранения данных участников
 participants = {}
 users_started = set()  # Хранит пользователей, которые нажали "Начать" первый раз
+participant_list_message: Message = None  # Сообщение со списком участников
 
 # Команда для начала взаимодействия с ботом и отображения кнопок
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -41,6 +42,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Обработчик для нажатий на кнопки
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global participant_list_message
     query = update.callback_query
     await query.answer()
 
@@ -53,16 +55,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # Определение сообщения в зависимости от пола пользователя
             if username in female_users:
-                await context.bot.send_message(chat_id=query.from_user.id, text="Сосала?")
+                text = "Сосала?"
             elif username in male_users:
-                await context.bot.send_message(chat_id=query.from_user.id, text="Сосал?")
+                text = "Сосал?"
             else:
-                await context.bot.send_message(chat_id=query.from_user.id, text="Ты сосал?")
+                text = "Ты сосал?"
+            
+            # Отправляем сообщение перед кнопками
+            await context.bot.send_message(chat_id=query.from_user.id, text=text)
 
             # Пауза перед отправкой кнопок "Да"
             await asyncio.sleep(1)
 
-            #  Отображение кнопок "Да" после сообщения "Сосал?"
+            # Отображение кнопок "Да" после сообщения "Сосал?"
             keyboard = [
                 [InlineKeyboardButton("Да", callback_data='yes')],
                 [InlineKeyboardButton("Да", callback_data='yes')]
@@ -104,35 +109,28 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Сообщение о регистрации
         await query.edit_message_text("Вы зарегистрированы!")
 
-        # Кнопка для просмотра участников, доступная после регистрации
-        keyboard = [
-            [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.edit_reply_markup(reply_markup=reply_markup)
-
         # Проверка на количество участников для старта жеребьевки
         if len(participants) == 8:
             await start_secret_santa(context)
 
+        # Отправляем или обновляем сообщение со списком участников
+        await update_participant_list(query, context)
+
     # Просмотр зарегистрированных участников
     elif query.data == 'view_participants':
-        # Отправляем список участников
-        if participants:
-            participant_list = "\n".join(participants.keys())
-            await query.message.reply_text(f"Список зарегистрированных участников:\n{participant_list}")
-        else:
-            await query.message.reply_text("Список участников пока пуст.")
+        await update_participant_list(query, context)
 
-        # Удаляем старое сообщение с кнопкой
-        await query.message.delete()
+async def update_participant_list(query, context):
+    global participant_list_message
+    participant_list = "\n".join(participants.keys())
 
-        # Отправляем новое сообщение с кнопкой "Показать участников", чтобы кнопка оставалась доступной
-        keyboard = [
-            [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.edit_reply_markup(reply_markup=reply_markup)
+    # Обновляем или создаем сообщение со списком участников
+    if participant_list_message:
+        await participant_list_message.edit_text(f"Список зарегистрированных участников:\n{participant_list}")
+    else:
+        participant_list_message = await query.message.reply_text(
+            f"Список зарегистрированных участников:\n{participant_list}"
+        )
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
