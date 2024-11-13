@@ -2,7 +2,7 @@ import logging
 import random
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 
 # Настройка логирования
 logging.basicConfig(
@@ -29,6 +29,7 @@ male_users = {'@alexander_mikh', '@Ivankotans', '@adamovichaa', '@Xitrets_23'}
 # Словарь для хранения данных участников
 participants = {}
 users_started = set()  # Хранит пользователей, которые нажали "Начать" первый раз
+registered_users = set()  # Хранит зарегистрированных пользователей
 participant_list_message: Message = None  # Сообщение со списком участников
 
 # Команда для начала взаимодействия с ботом и отображения кнопок
@@ -38,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Начать", callback_data='begin')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Добро пожаловать! Чтобы начать, нажмите кнопку:", reply_markup=reply_markup)
+    await update.message.reply_text("Жми сюда:", reply_markup=reply_markup)
 
 # Обработчик для нажатий на кнопки
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -69,11 +70,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # Отправляем кнопки "Да" после сообщения "Сосал?"
             keyboard = [
-                [InlineKeyboardButton("Да", callback_data='yes')],
-                [InlineKeyboardButton("Да", callback_data='yes')]
+                [
+                    InlineKeyboardButton("Да", callback_data='yes'),
+                    InlineKeyboardButton("Да", callback_data='yes')
+                ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await context.bot.send_message(chat_id=query.from_user.id, text="Выберите ответ:", reply_markup=reply_markup)
+            await context.bot.send_message(chat_id=query.from_user.id, reply_markup=reply_markup)
 
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
@@ -87,7 +90,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("Зарегистрироваться", callback_data='register')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("Теперь вы можете зарегистрироваться:", reply_markup=reply_markup)
+        await query.message.reply_text("Регайся:", reply_markup=reply_markup)
 
     # Регистрация пользователя
     elif query.data == 'register':
@@ -105,9 +108,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'to_receive': 0,
             'exclusion': exclusion
         }
+        registered_users.add(username)  # Добавляем в список зарегистрированных
 
         # Сообщение о регистрации
-        await query.edit_message_text("Вы зарегистрированы!")
+        await query.edit_message_text("Зарегался, харош!")
 
         # Проверка на количество участников для старта жеребьевки
         if len(participants) == 8:
@@ -126,10 +130,10 @@ async def update_participant_list(query, context):
 
     # Обновляем или создаем сообщение со списком участников
     if participant_list_message:
-        await participant_list_message.edit_text(f"Список зарегистрированных участников:\n{participant_list}")
+        await participant_list_message.edit_text(f"Кто еще зарегался:\n{participant_list}")
     else:
         participant_list_message = await query.message.reply_text(
-            f"Список зарегистрированных участников:\n{participant_list}"
+            f"Кто еще зарегался:\n{participant_list}"
         )
 
 # Функция для жеребьевки
@@ -156,7 +160,7 @@ async def start_secret_santa(context):
 
         # Отправляем каждому пользователю его пару
         user = await participants[giver]
-        await user.send_message(f"Вы должны подарить подарок: {receiver}")
+        await user.send_message(f"Вы должны подарок этим людям: {receiver}")
 
     # Уведомляем всех, что жеребьевка завершена
     pair_message = "Пары для проверки:\n"
@@ -167,6 +171,14 @@ async def start_secret_santa(context):
     # Отправляем результат администратору
     await context.bot.send_message(chat_id=561541752, text=pair_message)
 
+# Ответ на сообщения после регистрации
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    username = f"@{update.message.from_user.username}" if update.message.from_user.username else None
+
+    # Проверка, что пользователь зарегистрирован
+    if username in registered_users:
+        await update.message.reply_text("не пиши сюда")
+
 # Основная функция для запуска бота
 def main():
     API_TOKEN = "7942493404:AAH3lOMj9JqrLVaBULyzuuJAV2Ok4jerA2I"
@@ -175,6 +187,8 @@ def main():
     # Добавляем обработчики
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
     application.run_polling()
 
 if __name__ == "__main__":
