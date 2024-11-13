@@ -67,13 +67,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Пауза перед отправкой кнопок "Да"
             await asyncio.sleep(1)
 
-            # Отображение кнопок "Да" после сообщения "Сосал?"
+            # Отправляем кнопки "Да" после сообщения "Сосал?"
             keyboard = [
                 [InlineKeyboardButton("Да", callback_data='yes')],
                 [InlineKeyboardButton("Да", callback_data='yes')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.message.edit_reply_markup(reply_markup=reply_markup)
+            await context.bot.send_message(chat_id=query.from_user.id, text="Выберите ответ:", reply_markup=reply_markup)
 
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
