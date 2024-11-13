@@ -107,8 +107,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
-        # reply_markup = InlineKeyboardMarkup(keyboard)
-        # await context.bot.send_message(chat_id=query.from_user.id, text="Теперь вы можете просмотреть зарегистрированных участников:", reply_markup=reply_markup)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(chat_id=query.from_user.id, reply_markup=reply_markup)
 
         # Проверка на количество участников для старта жеребьевки
         if len(participants) == 8:
