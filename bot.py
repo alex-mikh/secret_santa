@@ -59,22 +59,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await context.bot.send_message(chat_id=query.from_user.id, text="Ты сосал?")
 
-            # Отображение кнопок "Да"
+            # Пауза перед отправкой кнопок "Да"
+            await asyncio.sleep(1)
+
+            # Отображение кнопок "Да" после сообщения "Сосал?"
             keyboard = [
                 [InlineKeyboardButton("Да", callback_data='yes')],
                 [InlineKeyboardButton("Да", callback_data='yes')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.message.edit_reply_markup (reply_markup=reply_markup)
-
-            await asyncio.sleep(1)
+            await query.message.reply_text("Выберите:", reply_markup=reply_markup)
 
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
         await context.bot.send_message(chat_id=query.from_user.id, text="Харош")
-        await asyncio.sleep(0,3)
+        await asyncio.sleep(0.3)
         await context.bot.send_sticker(chat_id=query.from_user.id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
         await asyncio.sleep(2)
+
         # Кнопка для регистрации
         keyboard = [
             [InlineKeyboardButton("Зарегистрироваться", callback_data='register')]
@@ -101,15 +103,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Сообщение о регистрации
         await query.edit_message_text("Вы зарегистрированы!")
-        # await context.bot.send_message(chat_id=561541752, text=f"Пользователь {username} успешно зарегистрировался.")
 
         # Кнопка для просмотра участников, доступная после регистрации
         keyboard = [
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.edit_reply_markup(reply_markup=reply_markup)
-
+        await query.message.reply_text("Вы всегда можете проверить список участников, нажав кнопку ниже:", reply_markup=reply_markup)
 
         # Проверка на количество участников для старта жеребьевки
         if len(participants) == 8:
@@ -123,18 +123,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(f"Список зарегистрированных участников:\n{participant_list}")
         else:
             await query.message.reply_text("Список участников пока пуст.")
-    
-        # Удаляем предыдущее сообщение с кнопкой
+
+        # Удаляем старое сообщение с кнопкой
         await query.message.delete()
 
-        # Создаем новое сообщение с кнопкой "Посмотреть участников"
+        # Отправляем новое сообщение с кнопкой "Показать участников", чтобы кнопка оставалась доступной
         keyboard = [
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        # Отправляем новое сообщение с кнопкой
-        await query.message.edit_reply_markup(reply_markup=reply_markup)
-
+        await context.bot.send_message(chat_id=query.from_user.id, text="Нажмите кнопку ниже для повторного просмотра списка участников:", reply_markup=reply_markup)
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
