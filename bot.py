@@ -22,8 +22,13 @@ exclusions_dict = {
     '@fedorchenko_alla_a': '@Xitrets_23'
 }
 
+# Списки девушек и парней
+female_users = {'@daryakostritsa', '@kireevapechet', '@acidcoma', '@fedorchenko_alla_a'}
+male_users = {'@alexander_mikh', '@Ivankotans', '@adamovichaa', '@Xitrets_23'}
+
 # Словарь для хранения данных участников
 participants = {}
+users_started = set()  # Хранит пользователей, которые нажали "Начать" первый раз
 registered_users = {}  # Хранит зарегистрированных пользователей и их ID для отправки сообщений
 
 # Команда для начала взаимодействия с ботом и отображения кнопок
@@ -33,7 +38,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Начать", callback_data='begin')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Жми сюда:", reply_markup=reply_markup)
+    await update.message.reply_text("Нажми, чтобы начать:", reply_markup=reply_markup)
 
 # Обработчик для нажатий на кнопки
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -45,25 +50,46 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Обработка кнопки "Начать"
     if query.data == 'begin':
-        # Пауза перед кнопками "Да"
-        await asyncio.sleep(1)
+        if username not in users_started:
+            users_started.add(username)  # Помечаем пользователя, что он начал
 
-        # Отправляем кнопки "Да"
-        keyboard = [
-            [InlineKeyboardButton("Да", callback_data='yes')],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(chat_id=user_id, text="Сосал?", reply_markup=reply_markup)
+            # Определение сообщения в зависимости от пола пользователя
+            if username in female_users:
+                text = "Сосала?"
+            elif username in male_users:
+                text = "Сосал?"
+            else:
+                text = "Ты сосал?"
+            
+            # Отправляем сообщение перед кнопками
+            await context.bot.send_message(chat_id=user_id, text=text)
+
+            # Пауза перед отправкой кнопок "Да"
+            await asyncio.sleep(0.5)
+
+            # Отправляем кнопки "Да" после сообщения "Сосал?"
+            keyboard = [
+                [
+                    InlineKeyboardButton("Да", callback_data='yes'),
+                    InlineKeyboardButton("Да", callback_data='yes')
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await context.bot.send_message(chat_id=user_id, text="Выберите вариант:", reply_markup=reply_markup)
 
     elif query.data == 'yes':
-        # Отправляем сообщение "Харош" и кнопку для регистрации
-        await context.bot.send_message(chat_id=user_id, text="Харош!")
-        await asyncio.sleep(2)
+        # Отправляем сообщение "Харош" и стикер
+        await context.bot.send_message(chat_id=user_id, text="Харош")
+        await asyncio.sleep(0.5)
+        await context.bot.send_sticker(chat_id=user_id, sticker='CAACAgIAAxkBAAEJ8FxnMefnpbE3LWxYd1v4j7xZmNFuBgACAQADnJy5FPJmUOyrH4j9NgQ')
+        await asyncio.sleep(1.5)
+
+        # Кнопка для регистрации
         keyboard = [
-            [InlineKeyboardButton("Зарегистрироваться", callback_data='register')]
+            [InlineKeyboardButton("Нажмите для регистрации", callback_data='register')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("Регайся:", reply_markup=reply_markup)
+        await query.message.reply_text("Зарегистрироваться:", reply_markup=reply_markup)
 
     # Регистрация пользователя
     elif query.data == 'register':
@@ -76,23 +102,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Регистрация участника
         exclusion = exclusions_dict.get(username, None)
-        participants[username] = {'to_give': [], 'to_receive': 0, 'exclusion': exclusion}
+        participants[username] = {
+            'to_give': [],
+            'to_receive': 0,
+            'exclusion': exclusion
+        }
         registered_users[username] = user_id  # Сохраняем ID пользователя
 
         # Сообщение о регистрации
-        await query.edit_message_text("Зарегался, харош!")
+        await query.edit_message_text("Вы зарегистрировались!")
 
         # Проверка на количество участников для старта жеребьевки
         if len(participants) == 8:
             await start_secret_santa(context)
 
-        # Отправляем обновленный список участников для всех
+        # Отправляем или обновляем сообщение со списком участников для всех зарегистрированных
         await update_participant_list(context)
 
 async def update_participant_list(context):
     # Обновленный список участников
     participant_list = "\n".join(participants.keys())
-    text = f"Кто еще зарегался:\n{participant_list}"
+    text = f"Список участников:\n{participant_list}"
 
     # Отправляем или обновляем сообщение со списком для каждого зарегистрированного пользователя
     for username, user_id in registered_users.items():
@@ -101,7 +131,7 @@ async def update_participant_list(context):
         except Exception as e:
             logger.error(f"Ошибка при отправке сообщения пользователю {username} ({user_id}): {e}")
 
-# Функция для жеребьевки
+# Обновленный алгоритм жеребьевки
 async def start_secret_santa(context):
     # Проверяем, что участников 8
     if len(participants) != 8:
@@ -111,25 +141,41 @@ async def start_secret_santa(context):
     usernames = list(participants.keys())
     random.shuffle(usernames)
 
-    # Создаем пары, чтобы каждый дарил двум уникальным участникам и получал от двух
-    for giver in usernames:
-        assigned_recipients = 0
-        exclusion = participants[giver]['exclusion']
+    # Пытаемся назначить подарки, пока не удастся корректно распределить всех
+    while True:
+        # Сбрасываем данные для каждого участника перед новой попыткой
+        for giver in usernames:
+            participants[giver]['to_give'] = []
+            participants[giver]['to_receive'] = 0
 
-        # Получаем список возможных получателей для текущего участника
-        potential_recipients = [u for u in usernames if u != giver and u != exclusion and u not in participants[giver]['to_give']]
-        
-        # Назначаем двух получателей
-        while assigned_recipients < 2 and potential_recipients:
-            receiver = potential_recipients.pop(0)
+        success = True
 
-            if participants[receiver]['to_receive'] < 2:  # Проверяем, что получатель не получил 2 подарка
-                participants[giver]['to_give'].append(receiver)
-                participants[receiver]['to_receive'] += 1
-                assigned_recipients += 1
+        # Для каждого участника выбираем два уникальных получателя
+        for giver in usernames:
+            exclusion = participants[giver]['exclusion']
 
-        if assigned_recipients < 2:
-            logger.error(f"Ошибка жеребьевки для {giver}: недостаточно уникальных получателей")
+            # Получаем список возможных получателей для текущего участника
+            potential_recipients = [u for u in usernames if u != giver and u != exclusion and participants[u]['to_receive'] < 2]
+
+            # Проверяем, чтобы у участника было хотя бы два возможных получателя
+            if len(potential_recipients) < 2:
+                print(f"Невозможно назначить два подарка для {giver}")
+                success = False
+                break
+
+            # Назначаем двух уникальных получателей
+            recipients = random.sample(potential_recipients, 2)  # Выбираем случайных двух уникальных получателей
+
+            # Назначаем подарки
+            participants[giver]['to_give'] = recipients
+            for receiver in recipients:
+                participants[receiver]['to_receive'] += 1  # Увеличиваем счетчик полученных подарков
+
+        # Если все прошло успешно, выходим из цикла
+        if success:
+            break
+        else:
+            print("Повторная попытка жеребьевки...")
 
     # Отправляем результаты жеребьевки каждому участнику
     for giver, details in participants.items():
@@ -150,7 +196,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Проверка, что пользователь зарегистрирован
     if username in registered_users:
-        await update.message.reply_text("не пиши сюда")
+        await update.message.reply_text("Не пиши сюда")
 
 # Основная функция для запуска бота
 def main():
