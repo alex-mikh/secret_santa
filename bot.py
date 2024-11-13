@@ -76,7 +76,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await context.bot.send_message(chat_id=query.from_user.id, reply_markup=reply_markup)
+            await context.bot.send_message(chat_id=query.from_user.id, text=" ", reply_markup=reply_markup)  # текст добавлен
 
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
