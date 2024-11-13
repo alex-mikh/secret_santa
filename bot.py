@@ -68,8 +68,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("Да", callback_data='yes')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.message.reply_text("Выберите:", reply_markup=reply_markup)
-
+            await query.message.edit_reply_markup(reply_markup=reply_markup)
+            
     elif query.data == 'yes':
         # Отправляем сообщение "Харош" и стикер
         await context.bot.send_message(chat_id=query.from_user.id, text="Харош")
@@ -109,7 +109,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("Вы всегда можете проверить список участников, нажав кнопку ниже:", reply_markup=reply_markup)
+        await query.message.edit_reply_markup(reply_markup=reply_markup)
 
         # Проверка на количество участников для старта жеребьевки
         if len(participants) == 8:
@@ -132,7 +132,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(chat_id=query.from_user.id, text="Нажмите кнопку ниже для повторного просмотра списка участников:", reply_markup=reply_markup)
+        await query.message.edit_reply_markup(reply_markup=reply_markup)
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
