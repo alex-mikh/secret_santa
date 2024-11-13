@@ -117,20 +117,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Просмотр зарегистрированных участников
     elif query.data == 'view_participants':
-        
+        # Отправляем список участников
         if participants:
             participant_list = "\n".join(participants.keys())
             await query.message.reply_text(f"Список зарегистрированных участников:\n{participant_list}")
         else:
             await query.message.reply_text("Список участников пока пуст.")
+    
+        # Удаляем предыдущее сообщение с кнопкой
+        await query.message.delete()
 
-
-        # Постоянная кнопка для повторного просмотра участников
+        # Создаем новое сообщение с кнопкой "Посмотреть участников"
         keyboard = [
             [InlineKeyboardButton("Посмотреть участников", callback_data='view_participants')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
+        # Отправляем новое сообщение с кнопкой
         await query.message.edit_reply_markup(reply_markup=reply_markup)
+
 
 # Функция для жеребьевки
 async def start_secret_santa(context):
