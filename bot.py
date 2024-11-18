@@ -217,6 +217,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if username in registered_users:
         await update.message.reply_text("Не пиши сюда")
 
+async def notify_users(context: ContextTypes.DEFAULT_TYPE):
+    # Сообщение, которое нужно отправить всем пользователям из списка
+    message = "ВРОДЕ ПОПРАВИЛ ХЗ, НАЖМИТЕ ЕЩЕ РАЗ /start ПЛЗ"
+
+    # Отправка сообщения всем зарегистрированным пользователям
+    all_users = female_users.union(male_users)
+    for username in all_users:
+        if username in registered_users:
+            user_id = registered_users[username]
+            try:
+                await context.bot.send_message(chat_id=user_id, text=message)
+            except Exception as e:
+                logger.error(f"Ошибка при отправке сообщения пользователю {username} ({user_id}): {e}")
+                
 # Основная функция для запуска бота
 def main():
     API_TOKEN = "7942493404:AAH3lOMj9JqrLVaBULyzuuJAV2Ok4jerA2I"
