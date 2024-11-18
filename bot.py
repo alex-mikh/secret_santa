@@ -19,17 +19,20 @@ exclusions_dict = {
     '@adamovichaa': '@acidcoma',
     '@acidcoma': '@adamovichaa',
     '@Xitrets_23': '@fedorchenko_alla_a',
-    '@fedorchenko_alla_a': '@Xitrets_23'
+    '@fedorchenko_alla_a': '@Xitrets_23',
+    '@dreadsbliss': '@zeludevdenis',
+    '@zeludevdenis': '@dreadsbliss'
 }
 
 # Списки девушек и парней
-female_users = {'@daryakostritsa', '@kireevapechet', '@acidcoma', '@fedorchenko_alla_a'}
-male_users = {'@alexander_mikh', '@Ivankotans', '@adamovichaa', '@Xitrets_23'}
+female_users = {'@daryakostritsa', '@kireevapechet', '@acidcoma', '@fedorchenko_alla_a', '@dreadsbliss'}
+male_users = {'@alexander_mikh', '@Ivankotans', '@adamovichaa', '@Xitrets_23', '@zeludevdenis'}
 
 # Словарь для хранения данных участников
 participants = {}
 users_started = set()  # Хранит пользователей, которые нажали "Начать" первый раз
 registered_users = {}  # Хранит зарегистрированных пользователей и их ID для отправки сообщений
+first_message_id = None  # ID первого сообщения со списком участников
 
 # Команда для начала взаимодействия с ботом и отображения кнопок
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -124,7 +127,23 @@ async def update_participant_list(context):
     participant_list = "\n".join(participants.keys())
     text = f"Список участников:\n{participant_list}"
 
-    # Отправляем или обновляем сообщение со списком для каждого зарегистрированного пользователя
+    # Если это первое сообщение, отправляем его и сохраняем ID
+    global first_message_id
+    if first_message_id is None:
+        message = await context.bot.send_message(
+            chat_id=list(registered_users.values())[0],  # Отправляем сообщение первому зарегистрированному пользователю
+            text=text
+        )
+        first_message_id = message.message_id  # Сохраняем ID первого сообщения
+    else:
+        # Редактируем первое сообщение
+        await context.bot.edit_message_text(
+            chat_id=list(registered_users.values())[0],  # Отправляем сообщение первому зарегистрированному пользователю
+            message_id=first_message_id,
+            text=text
+        )
+
+    # Отправляем или обновляем сообщение со списком для всех зарегистрированных пользователей
     for username, user_id in registered_users.items():
         try:
             await context.bot.send_message(chat_id=user_id, text=text)
