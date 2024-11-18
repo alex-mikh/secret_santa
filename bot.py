@@ -116,7 +116,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Вы зарегистрировались!")
 
         # Проверка на количество участников для старта жеребьевки
-        if len(participants) == 8:
+        if len(participants) == 10:
             await start_secret_santa(context)
 
         # Отправляем или обновляем сообщение со списком участников для всех зарегистрированных
@@ -153,7 +153,7 @@ async def update_participant_list(context):
 # Обновленный алгоритм жеребьевки
 async def start_secret_santa(context):
     # Проверяем, что участников 8
-    if len(participants) != 8:
+    if len(participants) != 10:
         return
 
     # Список участников
@@ -230,7 +230,7 @@ async def notify_users(context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(chat_id=user_id, text=message)
             except Exception as e:
                 logger.error(f"Ошибка при отправке сообщения пользователю {username} ({user_id}): {e}")
-                
+
 # Основная функция для запуска бота
 def main():
     API_TOKEN = "7942493404:AAH3lOMj9JqrLVaBULyzuuJAV2Ok4jerA2I"
