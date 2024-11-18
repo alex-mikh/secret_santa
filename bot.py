@@ -150,19 +150,19 @@ async def update_participant_list(context):
         except Exception as e:
             logger.error(f"Ошибка при отправке сообщения пользователю {username} ({user_id}): {e}")
 
-async def send_message_to_all_users(context: ContextTypes.DEFAULT_TYPE):
-    # Сообщение для всех пользователей
-    message = "ВРОДЕ ПОПРАВИЛ ХЗ, НАЖМИТЕ ЕЩЕ РАЗ /start ПЛЗ"
+# async def send_message_to_all_users(context: ContextTypes.DEFAULT_TYPE):
+#     # Сообщение для всех пользователей
+#     message = "ВРОДЕ ПОПРАВИЛ ХЗ, НАЖМИТЕ ЕЩЕ РАЗ /start ПЛЗ"
 
-    # Отправка сообщения всем пользователям из списка
-    all_users = female_users.union(male_users)
-    for username in all_users:
-        try:
-            if username in registered_users:
-                user_id = registered_users[username]
-                await context.bot.send_message(chat_id=user_id, text=message)
-        except Exception as e:
-            logger.error(f"Ошибка при отправке сообщения пользователю {username}: {e}")
+#     # Отправка сообщения всем пользователям из списка
+#     all_users = female_users.union(male_users)
+#     for username in all_users:
+#         try:
+#             if username in registered_users:
+#                 user_id = registered_users[username]
+#                 await context.bot.send_message(chat_id=user_id, text=message)
+#         except Exception as e:
+#             logger.error(f"Ошибка при отправке сообщения пользователю {username}: {e}")
 
 # Обновленный алгоритм жеребьевки
 async def start_secret_santa(context):
@@ -237,7 +237,7 @@ def main():
     application = Application.builder().token(API_TOKEN).build()
 
     # Отправить сообщение всем зарегистрированным пользователям до старта
-    application.add_job(send_message_to_all_users, "interval", minutes=10, context=application)
+    # application.add_job(send_message_to_all_users, "interval", minutes=10, context=application)
 
     # Добавляем обработчики
     application.add_handler(CommandHandler("start", start))
